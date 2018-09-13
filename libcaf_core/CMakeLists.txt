@@ -136,7 +136,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/build_config.hpp.in"
                @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/caf/detail/build_config.hpp"
         DESTINATION include/caf/detail
-        COMPONENT core
+        COMPONENT dev
 )
 list(APPEND LIBCAF_CORE_HDRS
   "${CMAKE_CURRENT_BINARY_DIR}/caf/detail/build_config.hpp"
@@ -167,21 +167,25 @@ set_target_properties(libcaf_core
 
 install(TARGETS libcaf_core
   EXPORT CAFCoreTargets
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT core
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT core
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT core
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 install(EXPORT CAFCoreTargets
   DESTINATION ${INSTALL_CAF_CMAKEDIR}
   NAMESPACE caf::
   EXPORT_LINK_INTERFACE_LIBRARIES
-  COMPONENT core
 )
 install(
   DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/caf"
   DESTINATION include
-  COMPONENT core
+  COMPONENT dev
   FILES_MATCHING PATTERN "*.hpp"
+)
+
+export(EXPORT CAFCoreTargets
+  FILE CAFCoreTargets.cmake
+  NAMESPACE caf::
 )
 
 # create alias so find_package(CAF) and add_subdirectory(caf) can be

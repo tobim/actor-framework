@@ -124,18 +124,6 @@ endif()
 if (${CAF_LOG_LEVEL} STREQUAL "TRACE")
   set(CAF_LOG_LEVEL_INT "4")
 endif()
-# allow enabling IPO on gcc/clang
-if(POLICY CMP0069)
-  cmake_policy(SET CMP0069 NEW)
-else()
-  if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      build_string("EXTRA_FLAGS" "-flto")
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-      build_string("EXTRA_FLAGS" "-flto -fno-fat-lto-objects")
-    endif()
-  endif()
-endif()
 
 # process cmake_uninstall.cmake.in
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
@@ -148,36 +136,16 @@ add_custom_target(uninstall
 
 set(TEST_REGEX "CAF_SUITE (.*)")
 add_subdirectory(libcaf_test)
-export(EXPORT CAFTestTargets
-  FILE CAFTestTargets.cmake
-  NAMESPACE caf::
-)
 
 add_subdirectory(libcaf_core)
-export(EXPORT CAFCoreTargets
-  FILE CAFCoreTargets.cmake
-  NAMESPACE caf::
-)
 if (NOT ${CAF_NO_IO})
   add_subdirectory(libcaf_io)
-  export(EXPORT CAFIOTargets
-    FILE CAFIOTargets.cmake
-    NAMESPACE caf::
-  )
 endif()
 if (NOT ${CAF_NO_OPENCL})
   add_subdirectory(libcaf_opencl)
-  export(EXPORT CAFOpenCLTargets
-    FILE CAFOpenCLTargets.cmake
-    NAMESPACE caf::
-  )
 endif()
 if (NOT ${CAF_NO_OPENSSL})
   add_subdirectory(libcaf_openssl)
-  export(EXPORT CAFOpenSSLTargets
-    FILE CAFOpenSSLTargets.cmake
-    NAMESPACE caf::
-  )
 endif()
 if(NOT ${CAF_NO_PYTHON})
   add_subdirectory(libcaf_python)
