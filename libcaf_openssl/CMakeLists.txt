@@ -1,4 +1,5 @@
-project(caf_openssl C CXX)
+find_package(OpenSSL 1.0.1 REQUIRED)
+include(OpenSSLTargets)
 
 # get header files; only needed by CMake generators,
 # e.g., for creating proper Xcode projects
@@ -13,54 +14,59 @@ set(LIBCAF_OPENSSL_SRCS
   src/session.cpp
 )
 
-add_custom_target(libcaf_openssl)
+add_library(libcaf_openssl ${LIBCAF_OPENSSL_SRCS} ${LIBCAF_OPENSSL_HDRS})
+target_include_directories(libcaf_openssl PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(libcaf_openssl PUBLIC caf::core caf::io OpenSSL::SSL)
+set_target_properties(libcaf_openssl
+  PROPERTIES
+  EXPORT_NAME openssl
+  SOVERSION ${CAF_VERSION_COMPAT}
+  VERSION ${CAF_VERSION}
+  OUTPUT_NAME caf_openssl
+)
 
-if (MINGW)
-  set(OPENSSL_LIBRARIES ${OPENSSL_LIBRARIES} -lz)
-endif()
-# build shared library if not compiling static only
-if (NOT CAF_BUILD_STATIC_ONLY)
-  add_library(libcaf_openssl_shared SHARED
-              ${LIBCAF_OPENSSL_SRCS} ${LIBCAF_OPENSSL_HDRS})
-  target_link_libraries(libcaf_openssl_shared ${CAF_EXTRA_LDFLAGS}
-                        ${CAF_LIBRARY_CORE} ${CAF_LIBRARY_IO} ${OPENSSL_LIBRARIES})
+install(TARGETS libcaf_openssl
+  EXPORT CAFOpenSSLTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(EXPORT CAFOpenSSLTargets
+  DESTINATION ${INSTALL_CAF_CMAKEDIR}
+  NAMESPACE caf::
+  EXPORT_LINK_INTERFACE_LIBRARIES
+)
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/caf"
+  DESTINATION include
+  COMPONENT dev
+  FILES_MATCHING PATTERN "*.hpp"
+)
 
-  if(NOT APPLE AND NOT WIN32)
-    target_link_libraries(libcaf_openssl_shared "-pthread")
-  endif()
+export(EXPORT CAFOpenSSLTargets
+  FILE CAFOpenSSLTargets.cmake
+  NAMESPACE caf::
+)
 
-  set_target_properties(libcaf_openssl_shared
-                        PROPERTIES
-                        SOVERSION ${CAF_VERSION}
-                        VERSION ${CAF_VERSION}
-                        OUTPUT_NAME caf_openssl)
-  if (CYGWIN)
-    install(TARGETS libcaf_openssl_shared RUNTIME DESTINATION bin)
-  elseif (NOT WIN32)
-    install(TARGETS libcaf_openssl_shared LIBRARY DESTINATION lib)
-  endif()
-  add_dependencies(libcaf_openssl_shared libcaf_openssl)
-endif ()
+# create alias so find_package(CAF) and add_subdirectory(caf) can be
+# interchanged without the need of additional modifications to the
+# consuming cmake scripts
+add_library(caf::openssl ALIAS libcaf_openssl)
 
-# build static library only if --build-static or --build-static-only was set
-if (CAF_BUILD_STATIC_ONLY OR CAF_BUILD_STATIC)
-  add_library(libcaf_openssl_static STATIC
-              ${LIBCAF_OPENSSL_HDRS} ${LIBCAF_OPENSSL_SRCS})
-  target_link_libraries(libcaf_openssl_static ${CAF_EXTRA_LDFLAGS}
-                        ${CAF_LIBRARY_CORE_STATIC} ${CAF_LIBRARY_IO_STATIC} ${OPENSSL_LIBRARIES})
-  set_target_properties(libcaf_openssl_static PROPERTIES
-                        OUTPUT_NAME caf_openssl_static)
-  if(NOT WIN32)
-    install(TARGETS libcaf_openssl_static ARCHIVE DESTINATION lib)
-  endif()
-  add_dependencies(libcaf_openssl_static libcaf_openssl)
-endif ()
+# export the OpenSSL targets to the build tree
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cmake/OpenSSLTargets.cmake
+  ${PROJECT_BINARY_DIR}
+  COPYONLY
+)
+# export the OpenSSL targets to the install location
+install(FILES
+  "${PROJECT_BINARY_DIR}/OpenSSLTargets.cmake"
+  DESTINATION ${INSTALL_CAF_CMAKEDIR}
+  COMPONENT dev
+)
 
-link_directories(${LD_DIRS})
-include_directories(. ${INCLUDE_DIRS})
-
-# install includes
-if(NOT WIN32)
-  install(DIRECTORY caf/ DESTINATION include/caf FILES_MATCHING PATTERN "*.hpp")
-endif()
-
+add_subdirectory(test)

@@ -1,0 +1,104 @@
+include(CAFTestHelpers)
+
+set(LIBCAF_CORE_TEST_SRCS
+  actor_clock.cpp
+  actor_factory.cpp
+  actor_lifetime.cpp
+  actor_pool.cpp
+  actor_termination.cpp
+  aout.cpp
+  atom.cpp
+  behavior.cpp
+  blocking_actor.cpp
+  bounds_checker.cpp
+  broadcast_downstream_manager.cpp
+  composable_behavior.cpp
+  composition.cpp
+  config_option.cpp
+  config_option_set.cpp
+  config_value.cpp
+  constructor_attach.cpp
+  continuous_streaming.cpp
+  custom_exception_handler.cpp
+  deep_to_string.cpp
+  delayed_send.cpp
+  detached_actors.cpp
+  dictionary.cpp
+  drr_cached_queue.cpp
+  drr_queue.cpp
+  dynamic_spawn.cpp
+  expected.cpp
+  extract.cpp
+  fifo_inbox.cpp
+  function_view.cpp
+  fused_streaming.cpp
+  handles.cpp
+  inbound_path.cpp
+  ini_consumer.cpp
+  inspector.cpp
+  intrusive_ptr.cpp
+  ipv4_address.cpp
+  ipv4_subnet.cpp
+  ipv6_address.cpp
+  ipv6_subnet.cpp
+  lifo_inbox.cpp
+  limited_vector.cpp
+  local_group.cpp
+  local_migration.cpp
+  logger.cpp
+  mailbox_element.cpp
+  match.cpp
+  message.cpp
+  message_lifetime.cpp
+  metaprogramming.cpp
+  mock_streaming_classes.cpp
+  native_streaming_classes.cpp
+  optional.cpp
+  or_else.cpp
+  pipeline_streaming.cpp
+  read_atom.cpp
+  read_bool.cpp
+  read_ini.cpp
+  read_number.cpp
+  read_number_or_timespan.cpp
+  read_string.cpp
+  request_response.cpp
+  request_timeout.cpp
+  result.cpp
+  ripemd_160.cpp
+  runtime_settings_map.cpp
+  selective_streaming.cpp
+  sequencer.cpp
+  serialization.cpp
+  serial_reply.cpp
+  simple_timeout.cpp
+  splitter.cpp
+  stateful_actor.cpp
+  streambuf.cpp
+  string_view.cpp
+  sum_type.cpp
+  sum_type_token.cpp
+  task_queue.cpp
+  thread_hook.cpp
+  tick_emitter.cpp
+  to_string.cpp
+  typed_response_promise.cpp
+  typed_spawn.cpp
+  type_erased_tuple.cpp
+  unit.cpp
+  unordered_flat_map.cpp
+  uri.cpp
+  variant.cpp
+  wdrr_dynamic_multiplexed_queue.cpp
+  wdrr_fixed_multiplexed_queue.cpp
+)
+
+if (TARGET caf::test-main)
+  add_executable(libcaf_core-test ${LIBCAF_CORE_TEST_SRCS})
+  target_link_libraries(libcaf_core-test caf::core caf::test-main)
+else ()
+  add_executable(libcaf_core-test ${LIBCAF_CORE_TEST_SRCS} ${CAF_TEST_MAIN})
+  target_link_libraries(libcaf_core-test caf::core caf::test)
+endif()
+scan_caf_test_suites(libcaf_core-test REGEX "${TEST_REGEX}")
+register_caf_tests(libcaf_core-test ARGUMENTS "-r 300 -n -v 5")

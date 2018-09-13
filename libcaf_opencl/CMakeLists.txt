@@ -1,4 +1,5 @@
-project(caf_opencl C CXX)
+find_package(OpenCL REQUIRED)
+include(OpenCLTargets)
 
 # get header files; only needed by CMake generators,
 # e.g., for creating proper Xcode projects
@@ -14,42 +15,58 @@ set(LIBCAF_OPENCL_SRCS
   src/program.cpp
 )
 
-# build shared library if not compiling static only
-if(NOT CAF_BUILD_STATIC_ONLY)
-  add_library(libcaf_opencl_shared SHARED ${LIBCAF_OPENCL_SRCS}
-              ${LIBCAF_OPENCL_HDRS} ${OpenCL_INCLUDE_DIRS})
-  target_link_libraries(libcaf_opencl_shared ${CAF_EXTRA_LDFLAGS}
-                                             ${CAF_LIBRARY_CORE}
-                                             ${OpenCL_LIBRARIES})
-  target_link_libraries(libcaf_opencl_shared
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-  )
-  set_target_properties(libcaf_opencl_shared
-                        PROPERTIES
-                        SOVERSION "${CAF_VERSION}"
-                        VERSION "${CAF_VERSION}"
-                        OUTPUT_NAME caf_opencl)
-  install(TARGETS libcaf_opencl_shared LIBRARY DESTINATION lib)
-endif()
+add_library(libcaf_opencl ${LIBCAF_OPENCL_SRCS} ${LIBCAF_OPENCL_HDRS})
+target_include_directories(libcaf_opencl PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(libcaf_opencl PUBLIC caf::core OpenCL::OpenCL)
+set_target_properties(libcaf_opencl
+  PROPERTIES
+  EXPORT_NAME opencl
+  SOVERSION ${CAF_VERSION_COMPAT}
+  VERSION ${CAF_VERSION}
+  OUTPUT_NAME caf_opencl
+)
 
-# build static library only if --build-static or --build-static-only was set
-if(CAF_BUILD_STATIC_ONLY OR CAF_BUILD_STATIC)
-  add_library(libcaf_opencl_static STATIC ${LIBCAF_OPENCL_SRCS}
-                                          ${LIBCAF_OPENCL_HDRS}
-                                          ${OpenCL_INCLUDE_DIRS})
-  target_link_libraries(libcaf_opencl_static ${CAF_EXTRA_LDFLAGS}
-                                             ${CAF_LIBRARY_CORE_STATIC}
-                                             ${OpenCL_LIBRARIES})
-  target_link_libraries(libcaf_opencl_static
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-  )
-  set_target_properties(libcaf_opencl_static PROPERTIES OUTPUT_NAME caf_opencl_static)
-  install(TARGETS libcaf_opencl_static ARCHIVE DESTINATION lib)
-endif()
+install(TARGETS libcaf_opencl
+  EXPORT CAFOpenCLTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(EXPORT CAFOpenCLTargets
+  DESTINATION ${INSTALL_CAF_CMAKEDIR}
+  NAMESPACE caf::
+  EXPORT_LINK_INTERFACE_LIBRARIES
+)
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/caf"
+  DESTINATION include
+  COMPONENT dev
+  FILES_MATCHING PATTERN "*.hpp"
+)
 
-# install includes
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/caf
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.hpp")
+export(EXPORT CAFOpenCLTargets
+  FILE CAFOpenCLTargets.cmake
+  NAMESPACE caf::
+)
+
+# create alias so find_package(CAF) and add_subdirectory(caf) can be
+# interchanged without the need of additional modifications to the
+# consuming cmake scripts
+add_library(caf::opencl ALIAS libcaf_opencl)
+
+# export the OpenCL target to the build tree
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cmake/OpenCLTargets.cmake
+  ${PROJECT_BINARY_DIR}
+  COPYONLY
+)
+install(FILES
+  "${PROJECT_BINARY_DIR}/OpenCLTargets.cmake"
+  DESTINATION ${INSTALL_CAF_CMAKEDIR}
+  COMPONENT dev
+)
+
+add_subdirectory(test)

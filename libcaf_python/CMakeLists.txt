@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
-project(caf_cash CXX)
-
 # check whether submodules are available
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/pybind/CMakeLists.txt")
   message(STATUS "Pybind submodule not loaded, skip libcaf_python.")

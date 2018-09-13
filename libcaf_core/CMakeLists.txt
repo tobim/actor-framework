@@ -1,5 +1,3 @@
-project(caf_core C CXX)
-
 # get header files; only needed by CMake generators,
 # e.g., for creating proper Xcode projects
 file(GLOB_RECURSE LIBCAF_CORE_HDRS "caf/*.hpp")
@@ -138,50 +136,63 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../cmake/build_config.hpp.in"
                @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/caf/detail/build_config.hpp"
         DESTINATION include/caf/detail
+        COMPONENT dev
 )
 list(APPEND LIBCAF_CORE_HDRS
   "${CMAKE_CURRENT_BINARY_DIR}/caf/detail/build_config.hpp"
 )
 
-add_custom_target(libcaf_core)
-
-# build shared library if not compiling static only
-if (NOT CAF_BUILD_STATIC_ONLY)
-  add_library(libcaf_core_shared SHARED ${LIBCAF_CORE_SRCS} ${LIBCAF_CORE_HDRS})
-  target_link_libraries(libcaf_core_shared ${CAF_EXTRA_LDFLAGS})
-  target_include_directories(libcaf_core_shared PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-  )
-  set_target_properties(libcaf_core_shared
-    PROPERTIES
-    SOVERSION ${CAF_VERSION}
-    VERSION ${CAF_VERSION}
-    OUTPUT_NAME caf_core
-  )
-  install(TARGETS libcaf_core_shared
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-  )
-  add_dependencies(libcaf_core_shared libcaf_core)
-endif ()
-
-# build static library only if --build-static or --build-static-only was set
-if (CAF_BUILD_STATIC_ONLY OR CAF_BUILD_STATIC)
-  add_library(libcaf_core_static STATIC ${LIBCAF_CORE_HDRS} ${LIBCAF_CORE_SRCS})
-  target_link_libraries(libcaf_core_static ${CAF_EXTRA_LDFLAGS})
-  target_include_directories(libcaf_core_static PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-  )
-  set_target_properties(libcaf_core_static PROPERTIES OUTPUT_NAME caf_core_static)
-  install(TARGETS libcaf_core_static ARCHIVE DESTINATION lib)
-  add_dependencies(libcaf_core_static libcaf_core)
-endif ()
-
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/caf"
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.hpp"
+# create core target
+add_library(libcaf_core ${LIBCAF_CORE_SRCS} ${LIBCAF_CORE_HDRS})
+target_include_directories(libcaf_core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+if (TARGET Threads::Threads)
+  target_link_libraries(libcaf_core PUBLIC Threads::Threads)
+else ()
+  if(NOT APPLE AND NOT WIN32)
+    target_link_libraries(libcaf_core PUBLIC -pthread)
+    target_compile_options(libcaf_core PUBLIC -pthread)
+  endif ()
+endif ()
+set_target_properties(libcaf_core
+  PROPERTIES
+  EXPORT_NAME core
+  SOVERSION ${CAF_VERSION_COMPAT}
+  VERSION ${CAF_VERSION}
+  OUTPUT_NAME caf_core
+)
+
+install(TARGETS libcaf_core
+  EXPORT CAFCoreTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(EXPORT CAFCoreTargets
+  DESTINATION ${INSTALL_CAF_CMAKEDIR}
+  NAMESPACE caf::
+  EXPORT_LINK_INTERFACE_LIBRARIES
+)
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/caf"
+  DESTINATION include
+  COMPONENT dev
+  FILES_MATCHING PATTERN "*.hpp"
+)
+
+export(EXPORT CAFCoreTargets
+  FILE CAFCoreTargets.cmake
+  NAMESPACE caf::
+)
+
+# create alias so find_package(CAF) and add_subdirectory(caf) can be
+# interchanged without the need of additional modifications to the
+# consuming cmake scripts
+add_library(caf::core ALIAS libcaf_core)
+
+if (${BUILD_TESTING})
+  add_subdirectory(test)
+endif ()

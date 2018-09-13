@@ -1,5 +1,3 @@
-project(caf_io C CXX)
-
 # get header files; only needed by CMake generators,
 # e.g., for creating proper Xcode projects
 file(GLOB_RECURSE LIBCAF_IO_HDRS "caf/*.hpp")
@@ -48,41 +46,54 @@ set(LIBCAF_IO_SRCS
   src/socket_guard.cpp
 )
 
-add_custom_target(libcaf_io)
-
-# build shared library if not compiling static only
-if (NOT CAF_BUILD_STATIC_ONLY)
-  add_library(libcaf_io_shared SHARED ${LIBCAF_IO_SRCS} ${LIBCAF_IO_HDRS})
-  target_link_libraries(libcaf_io_shared ${CAF_EXTRA_LDFLAGS} ${CAF_LIBRARY_CORE})
-  target_include_directories(libcaf_io_shared PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-  )
-  set_target_properties(libcaf_io_shared
-                        PROPERTIES
-                        SOVERSION ${CAF_VERSION}
-                        VERSION ${CAF_VERSION}
-                        OUTPUT_NAME caf_io)
-  install(TARGETS libcaf_io_shared
-          RUNTIME DESTINATION bin
-          LIBRARY DESTINATION lib)
-  add_dependencies(libcaf_io_shared libcaf_io)
+add_library(libcaf_io ${LIBCAF_IO_SRCS} ${LIBCAF_IO_HDRS})
+target_include_directories(libcaf_io PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(libcaf_io PUBLIC caf::core)
+if (TARGET Threads::Threads)
+  target_link_libraries(libcaf_io PUBLIC Threads::Threads)
+else ()
+  if(NOT APPLE AND NOT WIN32)
+    target_link_libraries(libcaf_io PUBLIC -pthread)
+    target_compile_options(libcaf_io PUBLIC -pthread)
+  endif ()
 endif ()
+set_target_properties(libcaf_io
+  PROPERTIES
+  EXPORT_NAME io
+  SOVERSION ${CAF_VERSION_COMPAT}
+  VERSION ${CAF_VERSION}
+  OUTPUT_NAME caf_io
+)
 
-# build static library only if --build-static or --build-static-only was set
-if (CAF_BUILD_STATIC_ONLY OR CAF_BUILD_STATIC)
-  add_library(libcaf_io_static STATIC ${LIBCAF_IO_HDRS} ${LIBCAF_IO_SRCS})
-  target_link_libraries(libcaf_io_static ${CAF_EXTRA_LDFLAGS} ${CAF_LIBRARY_CORE_STATIC})
-  target_include_directories(libcaf_io_static PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-  )
-  set_target_properties(libcaf_io_static PROPERTIES OUTPUT_NAME caf_io_static)
-  install(TARGETS libcaf_io_static ARCHIVE DESTINATION lib)
-  add_dependencies(libcaf_io_static libcaf_io)
-endif ()
+install(TARGETS libcaf_io
+  EXPORT CAFIOTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(EXPORT CAFIOTargets
+  DESTINATION ${INSTALL_CAF_CMAKEDIR}
+  NAMESPACE caf::
+  EXPORT_LINK_INTERFACE_LIBRARIES
+)
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/caf"
+  DESTINATION include
+  COMPONENT dev
+  FILES_MATCHING PATTERN "*.hpp"
+)
 
-# install includes
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/caf
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.hpp")
+export(EXPORT CAFIOTargets
+  FILE CAFIOTargets.cmake
+  NAMESPACE caf::
+)
+
+# create alias so find_package(CAF) and add_subdirectory(caf) can be
+# interchanged without the need of additional modifications to the
+# consuming cmake scripts
+add_library(caf::io ALIAS libcaf_io)
+
+add_subdirectory(test)

@@ -1,23 +1,25 @@
-project(caf_tools CXX)
-
 add_custom_target(all_tools)
 
-include_directories(${LIBCAF_INCLUDE_DIRS})
-
-macro(add name)
-  add_executable(${name} ${name}.cpp ${ARGN})
-  target_link_libraries(${name}
-                        ${CAF_EXTRA_LDFLAGS}
-                        ${CAF_LIBRARIES}
-                        ${PTHREAD_LIBRARIES})
-  install(FILES ${name}.cpp DESTINATION share/caf/tools/${folder})
-  add_dependencies(${name} all_tools)
-endmacro()
-
+# caf-run
 if(WIN32)
   message(STATUS "skip caf-run (not supported on Windows)")
 else()
-  add(caf-run)
+  add_executable(caf-run caf-run.cpp)
+  target_link_libraries(caf-run caf::core caf::io)
+  if (TARGET Threads::Threads)
+    target_link_libraries(caf-run Threads::Threads)
+  else ()
+    if(NOT APPLE)
+      target_link_libraries(caf-run -pthread)
+      target_compile_options(caf-run PRIVATE -pthread)
+    endif ()
+  endif ()
+  install(FILES caf-run.cpp DESTINATION ${DATADIR}/caf/tools)
+  add_dependencies(caf-run all_tools)
 endif()
 
-add(caf-vec)
+# caf-vec
+add_executable(caf-vec caf-vec.cpp)
+target_link_libraries(caf-vec caf::core)
+install(FILES caf-vec.cpp DESTINATION ${DATADIR}/caf/tools)
+add_dependencies(caf-vec all_tools)
