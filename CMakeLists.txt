@@ -136,16 +136,36 @@ add_custom_target(uninstall
 
 set(TEST_REGEX "CAF_SUITE (.*)")
 add_subdirectory(libcaf_test)
+export(EXPORT CAFTestTargets
+  FILE CAFTestTargets.cmake
+  NAMESPACE caf::
+)
 
 add_subdirectory(libcaf_core)
+export(EXPORT CAFCoreTargets
+  FILE CAFCoreTargets.cmake
+  NAMESPACE caf::
+)
 if (NOT ${CAF_NO_IO})
   add_subdirectory(libcaf_io)
+  export(EXPORT CAFIOTargets
+    FILE CAFIOTargets.cmake
+    NAMESPACE caf::
+  )
 endif()
 if (NOT ${CAF_NO_OPENCL})
   add_subdirectory(libcaf_opencl)
+  export(EXPORT CAFOpenCLTargets
+    FILE CAFOpenCLTargets.cmake
+    NAMESPACE caf::
+  )
 endif()
 if (NOT ${CAF_NO_OPENSSL})
   add_subdirectory(libcaf_openssl)
+  export(EXPORT CAFOpenSSLTargets
+    FILE CAFOpenSSLTargets.cmake
+    NAMESPACE caf::
+  )
 endif()
 if(NOT ${CAF_NO_PYTHON})
   add_subdirectory(libcaf_python)
