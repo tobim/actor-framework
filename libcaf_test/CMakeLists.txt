@@ -77,11 +77,6 @@ install(EXPORT CAFTestTargets
   EXPORT_LINK_INTERFACE_LIBRARIES
 )
 
-export(EXPORT CAFTestTargets
-  FILE CAFTestTargets.cmake
-  NAMESPACE caf::
-)
-
 # 'export' the test helper module to the build tree
 configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/CAFTestHelpers.cmake
