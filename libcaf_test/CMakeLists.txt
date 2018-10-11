@@ -52,7 +52,7 @@ if (NOT ${CMAKE_VERSION} VERSION_LESS "3.1")
   set(isExe $<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>)
   target_sources(libcaf_test-main INTERFACE
       "$<${isExe}:$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/caf-test.cpp>>"
-      "$<${isExe}:$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${DATADIR}/caf/test/caf-test.cpp>>"
+      "$<${isExe}:$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_DATADIR}/caf/test/caf-test.cpp>>"
   )
 
   if (NOT ${CMAKE_VERSION} VERSION_LESS "3.3")
@@ -63,7 +63,7 @@ if (NOT ${CMAKE_VERSION} VERSION_LESS "3.1")
       PUBLIC_HEADER DESTINATION include
       COMPONENT dev
     )
-    install(FILES src/caf-test.cpp DESTINATION ${DATADIR}/caf/test)
+    install(FILES src/caf-test.cpp DESTINATION ${CMAKE_INSTALL_DATADIR}/caf/test)
   endif ()
 
   add_library(caf::test-main ALIAS libcaf_test-main)
