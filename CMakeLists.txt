@@ -106,25 +106,6 @@ install(FILES
 # add helper target that simplifies re-running configure
 add_custom_target(configure COMMAND ${CMAKE_CURRENT_BINARY_DIR}/config.status)
 
-if (${CAF_LOG_LEVEL} STREQUAL "QUIET")
-set(CAF_LOG_LEVEL_INT "-1")
-endif()
-if (${CAF_LOG_LEVEL} STREQUAL "ERROR")
-  set(CAF_LOG_LEVEL_INT "0")
-endif()
-if (${CAF_LOG_LEVEL} STREQUAL "WARNING")
-  set(CAF_LOG_LEVEL_INT "1")
-endif()
-if (${CAF_LOG_LEVEL} STREQUAL "INFO")
-  set(CAF_LOG_LEVEL_INT "2")
-endif()
-if (${CAF_LOG_LEVEL} STREQUAL "DEBUG")
-  set(CAF_LOG_LEVEL_INT "3")
-endif()
-if (${CAF_LOG_LEVEL} STREQUAL "TRACE")
-  set(CAF_LOG_LEVEL_INT "4")
-endif()
-
 # process cmake_uninstall.cmake.in
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
                "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"

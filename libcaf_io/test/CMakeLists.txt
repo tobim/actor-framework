@@ -3,14 +3,12 @@ include(CAFTestHelpers)
 set(LIBCAF_IO_TEST_SRCS
   automatic_connection.cpp
   basp.cpp
-  basp_udp.cpp
   default_multiplexer.cpp
   dynamic_broker.cpp
   http_broker.cpp
   ip_endpoint.cpp
   receive_buffer.cpp
   remote_actor.cpp
-  remote_actor_udp.cpp
   remote_group.cpp
   remote_spawn.cpp
   triggering.cpp
