@@ -21,8 +21,12 @@ else ()
 endif ()
 option(CAF_NO_OPENSSL "Disable the openssl module")
 cmake_dependent_option(
-  CAF_NO_PYTHON "Disable python bindings" OFF "NOT CAF_NO_IO" ON
+  CAF_NO_PYTHON "Disable python bindings" ON "NOT CAF_NO_IO" ON
 )
+# TODO: Migrate to updated cmake structure.
+if (NOT ${CAF_NO_PYTHON})
+  message(FATAL_ERROR "caf-python currently broken.")
+endif ()
 cmake_dependent_option(
   CAF_NO_TOOLS "Disable caf tools" OFF "NOT CAF_NO_IO" ON
 )
@@ -38,9 +42,8 @@ set(CAF_LOG_LEVEL "QUIET" CACHE STRING "The maximum runtime log level")
 set(CAF_LOG_LEVEL_VALUES "QUIET" "ERROR" "WARNING" "INFO" "DEBUG" "TRACE")
 set_property(CACHE CAF_LOG_LEVEL PROPERTY STRINGS ${CAF_LOG_LEVEL_VALUES})
 
-## Silence policy CMP0042 warning by enabling RPATH explicitly.
+# Silence policy CMP0042 warning by enabling RPATH explicitly.
 set(CMAKE_MACOSX_RPATH TRUE CACHE BOOL "")
-
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
@@ -148,9 +151,9 @@ if (NOT ${CAF_NO_OPENSSL})
     NAMESPACE caf::
   )
 endif()
-if(NOT ${CAF_NO_PYTHON})
-  add_subdirectory(libcaf_python)
-endif()
+#if(NOT ${CAF_NO_PYTHON})
+#  add_subdirectory(libcaf_python)
+#endif()
 if(NOT ${CAF_NO_TOOLS})
   add_subdirectory(tools)
 endif()
