@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.0)
 cmake_policy(SET CMP0048 NEW)
+get_directory_property(parent PARENT_DIRECTORY)
+if(parent)
+  set(is_subproject ON)
+else()
+  set(is_subproject OFF)
+endif()
 
 # prohibit in-source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
@@ -106,19 +112,29 @@ install(FILES
   DESTINATION "${INSTALL_CAF_CMAKEDIR}"
 )
 
-# add helper target that simplifies re-running configure
-add_custom_target(configure COMMAND ${CMAKE_CURRENT_BINARY_DIR}/config.status)
+if(NOT is_subproject)
+  # add helper target that simplifies re-running configure
+  add_custom_target(configure COMMAND ${CMAKE_CURRENT_BINARY_DIR}/config.status)
 
-# process cmake_uninstall.cmake.in
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-               "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-               IMMEDIATE @ONLY)
-# add uninstall target
-add_custom_target(uninstall
-                  COMMAND "${CMAKE_COMMAND}" -P
-                  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+  # process cmake_uninstall.cmake.in
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+                 "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
+  # add uninstall target
+  add_custom_target(uninstall
+                    COMMAND "${CMAKE_COMMAND}" -P
+                    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+endif()
 
-set(TEST_REGEX "CAF_SUITE (.*)")
+add_custom_target(all-tests)
+function(setup_caf_test target)
+    message(STATUS "target is ${target}")
+  add_dependencies(all-tests ${target})
+  set_target_properties(${target}
+      PROPERTIES EXCLUDE_FROM_ALL ${is_subproject})
+  scan_caf_test_suites(${target} REGEX "CAF_SUITE (.*)")
+  register_caf_tests(${target} ARGUMENTS "-r 300 -n -v 5")
+endfunction(setup_caf_test)
+
 add_subdirectory(libcaf_test)
 export(EXPORT CAFTestTargets
   FILE CAFTestTargets.cmake
